@@ -1,0 +1,60 @@
+import socket
+import sys
+from datetime import datetime
+
+def get_valid_input(prompt, input_type, min_val=None, max_val=None):
+    while True:
+        try:
+            user_input = input_type(input(prompt))
+            if (min_val is not None and user_input < min_val) or (max_val is not None and user_input > max_val):
+                print(f"Input must be between {min_val} and {max_val}. Please try again.")
+            else:
+                return user_input
+        except ValueError:
+            print(f"Invalid input! Please enter a valid {input_type.__name__}.")
+
+
+        
+# Enter target domain and resolve IP (+ display result)
+
+target = input("Enter target domain here: ")
+try:
+    hostip = socket.gethostbyname(target)
+    print("Target: " + target)
+    print("HostIP: " + hostip)
+except socket.gaierror: 
+    print("Error resolving host name. Please check domain name")
+    sys.exit
+ 
+
+
+
+# Allow user to define scan parameters
+
+start_port = get_valid_input("Enter starting port (1-65535): ", int, 1, 65535)
+end_port = get_valid_input("Enter end port (1-65535): ", int, 1, 65535)
+
+if start_port > end_port:
+    print("Starting value must be lower or equal to ending port value. ")
+    sys.exit()
+
+# Allow user to define scan speed 
+
+timeout = get_valid_input("Enter timeout in seconds (e.g., 0.5): ",float,0.001, 10.0)
+
+# Traverse trough the range of ports
+
+for port in range(start_port,end_port + 1):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(timeout)
+    
+    try:
+        result = sock.connect_ex((hostip, port))
+        if result == 0:
+            print(f"Port no: {port} Open")
+        else:
+            print(f"Port no: {port} Closed")
+    except socket.error as e:
+        print(f"Error connecting to port {port}: {e}")    
+    finally: 
+        sock.close()
